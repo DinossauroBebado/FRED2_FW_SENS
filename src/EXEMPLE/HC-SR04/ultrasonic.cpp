@@ -1,5 +1,4 @@
 #include <MAIN/config.h>
-#include <Ultrasonic.h>
 #include <Arduino.h>
 
 /*
@@ -25,25 +24,41 @@
 #define ECHO_3 32
 #define TRIG_3 12
 
-// objects for the hc-sr04
-Ultrasonic ultrasonic1(TRIG_1, ECHO_1); 
-Ultrasonic ultrasonic2(TRIG_2, ECHO_2); 
-Ultrasonic ultrasonic3(TRIG_3, ECHO_3); 
+// ---------------------------------------------------------------------------
+// Example NewPing library sketch that pings 3 sensors 20 times a second.
+// ---------------------------------------------------------------------------
 
+#include <NewPing.h>
 
-void setup(){
+#define SONAR_NUM 3      // Number of sensors.
+#define MAX_DISTANCE 200 // Maximum distance (in cm) to ping.
 
-    Serial.begin(115200); 
+NewPing sonar[SONAR_NUM] = {   // Sensor object array.
+  NewPing(TRIG_1, ECHO_1, MAX_DISTANCE), // Each sensor's trigger pin, echo pin, and max distance to ping.
+  NewPing(TRIG_2, ECHO_2, MAX_DISTANCE),
+  NewPing(TRIG_3, ECHO_3, MAX_DISTANCE)
+};
 
+void setup() {
+  Serial.begin(115200); // Open serial monitor at 115200 baud to see ping results.
 }
 
-void loop(){
-    Serial.print("Sensor 01 (m): ");
-    Serial.println(ultrasonic1.read(CM));
+const int pingInterval = 30;  // Interval between pings in milliseconds
+unsigned long lastPingTime = 0;  // Variable to store the time of the last ping
+void loop() {
 
-    Serial.print("Sensor 02 (m): ");
-    Serial.println(ultrasonic2.read(CM));
+for (uint8_t i = 0; i < SONAR_NUM; i++) {
+  // Check if enough time has passed since the last ping
+  if (millis() - lastPingTime >= pingInterval) {
+    Serial.print(i);
+    Serial.print("=");
+    Serial.print(sonar[i].ping_cm());
+    Serial.print("cm ");
 
-    Serial.print("Sensor 03 (m): ");
-    Serial.println(ultrasonic3.read(CM));
+    // Update the last ping time
+    lastPingTime = millis();
+    Serial.println();
+  }
+}
+
 }

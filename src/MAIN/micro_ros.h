@@ -6,6 +6,10 @@
 #include <rclc/executor.h>
 #include <sensor_msgs/msg/imu.h>
 #include <rmw_microros/rmw_microros.h>
+#include <std_msgs/msg/int16.h>
+
+rcl_subscription_t led_manager_sub;
+std_msgs__msg__Int16 led_msg;
 
 // Define ROS node and publisher
 // extern "C" int clock_gettime(clockid_t unused, struct timespec *tp);
@@ -17,10 +21,20 @@ rcl_node_t node;
 rcl_publisher_t imu_publisher;
 sensor_msgs__msg__Imu imu_msg;
 
+int led_color = 0 ;
+
 #define LED_PIN 2
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){error_loop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){error_loop();}}
+
+
+// void led_manager_sub_callback(const void *msgin)
+// {
+//   const std_msgs__msg__Int16 *msg = (const std_msgs__msg__Int16 *)msgin;
+//   led_color = msg->data;
+//   led_strip_controler_ros(led_color);
+// }
 
 void error_loop(){
   for (int i = 0; i<10; i++)
@@ -47,6 +61,13 @@ void ros_init()
 
   RCCHECK(rclc_node_init_default(&node, "micro_ros_sensor_node", "", &support)); 
 
+  // create subscriber
+  // RCCHECK(rclc_subscription_init_default(
+  //   &led_manager_sub,
+  //   &node,
+  //   ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16),
+  //   "cmd/led_strip/color"));
+
   // Create a publisher for the IMU data
     rclc_publisher_init_best_effort(
     &imu_publisher,
@@ -54,8 +75,8 @@ void ros_init()
     ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
    "sensor/orientation/imu");
 
-  // Setup IMU message
 
+  //  RCCHECK(rclc_executor_add_subscription(&executor, &led_manager_sub, &led_msg, &led_manager_sub_callback, ON_NEW_DATA));
   // Wait for some time for everything to initialize
   delay(2000);
 }
