@@ -33,10 +33,9 @@ void setup(){
   // check that the IMU initializes correctly
   _imu_connect = imu_setup();
 
-  // if(_imu_connect == 0) {
-  //   nh.logwarn("MPU6050 connection successful");
-  //   digitalWrite(LED_BUILD_IN, HIGH); 
-  // }
+  if(_imu_connect != 0) {
+    ESP.restart();
+  }
 }
 
 
