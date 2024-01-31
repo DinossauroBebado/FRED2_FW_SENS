@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <Main/config.h>
+#include "config.h"
 #include <Adafruit_NeoPixel.h>
 
 // How many internal neopixels do we have? some boards have more than one!
