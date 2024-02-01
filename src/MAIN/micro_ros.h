@@ -5,20 +5,35 @@
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
 #include <sensor_msgs/msg/imu.h>
+#include <sensor_msgs/msg/range.h>
 #include <rmw_microros/rmw_microros.h>
 #include <std_msgs/msg/int16.h>
-
-rcl_subscription_t led_manager_sub;
-std_msgs__msg__Int16 led_msg;
-
-// Define ROS node and publisher
 
 rclc_executor_t executor;
 rcl_allocator_t allocator;
 rclc_support_t support;
 rcl_node_t node;
+
+
+//subs 
+rcl_subscription_t led_manager_sub;
+std_msgs__msg__Int16 led_msg;
+
+//pubs 
 rcl_publisher_t imu_publisher;
 sensor_msgs__msg__Imu imu_msg;
+
+// ultrasound 
+rcl_publisher_t ultrasound_publisher_left;
+std_msgs__msg__Int16 range_msg_left;
+
+rcl_publisher_t ultrasound_publisher_right;
+std_msgs__msg__Int16 range_msg_right;
+
+
+rcl_publisher_t ultrasound_publisher_back;
+std_msgs__msg__Int16 range_msg_back;
+
 
 int led_color = 0 ;
 
@@ -27,14 +42,6 @@ int led_color = 0 ;
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){error_loop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){error_loop();}}
 
-
-void led_manager_sub_callback(const void *msgin)
-{
-  const std_msgs__msg__Int16 *msg = (const std_msgs__msg__Int16 *)msgin;
-  led_color = msg->data;
-  led_strip_controler_ros(led_color);
-
-}
 
 void error_loop(){
   for (int i = 0; i<10; i++)
@@ -45,9 +52,43 @@ void error_loop(){
   ESP.restart();
 }
 
+
+void ros_ultrasonic(int *ultrasonic_range){
+  RCSOFTCHECK(rmw_uros_sync_session(1000));
+  int64_t time = rmw_uros_epoch_millis();
+  
+ 
+  
+
+  // range_msg_left.header.frame_id.data = "left_ultrasonic_link";
+ 
+  range_msg_right.data = ultrasonic_range[2];
+  range_msg_back.data = ultrasonic_range[1];
+  range_msg_left.data = ultrasonic_range[0]; // Current range value
+
+  RCSOFTCHECK(rcl_publish(&ultrasound_publisher_left, &range_msg_left, NULL));
+  RCSOFTCHECK(rcl_publish(&ultrasound_publisher_right, &range_msg_right, NULL));
+  RCSOFTCHECK(rcl_publish(&ultrasound_publisher_back, &range_msg_back, NULL));
+
+}
+
+
+
+void led_manager_sub_callback(const void *msgin)
+{
+  const std_msgs__msg__Int16 *msg = (const std_msgs__msg__Int16 *)msgin;
+  led_color = msg->data;
+  led_strip_controler_ros(led_color);
+
+}
+
+
 void ros_init()
 {
+
+  //set transport for serial 
   set_microros_transports();
+
 
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, HIGH);  
@@ -58,10 +99,12 @@ void ros_init()
 
   // create init_options
   RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
-
+  //init node 
   RCCHECK(rclc_node_init_default(&node, "micro_ros_sensor_node", "", &support)); 
+  //init executor 
+  RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
 
-  // create subscriber
+  // create subscriber for led 
   RCCHECK(rclc_subscription_init_default(
     &led_manager_sub,
     &node,
@@ -75,11 +118,38 @@ void ros_init()
     ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
    "sensor/orientation/imu"));
 
-   RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
-   RCCHECK(rclc_executor_add_subscription(&executor, &led_manager_sub, &led_msg, &led_manager_sub_callback, ON_NEW_DATA));
+   //create pub for ultrasounds 
+
+   RCCHECK(rclc_publisher_init_default(
+      &ultrasound_publisher_left,
+      &node,
+       ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16),
+      "sensor/range/ultrasonic/left"));
+
+  RCCHECK(rclc_publisher_init_default(
+    &ultrasound_publisher_right,
+    &node,
+    ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16),
+    "sensor/range/ultrasonic/right"));
+
+
+
+  RCCHECK(rclc_publisher_init_default(
+  &ultrasound_publisher_back,
+  &node,
+  ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16),
+  "sensor/range/ultrasonic/back"));
+
+  RCCHECK(rclc_executor_add_subscription(&executor, &led_manager_sub, &led_msg, &led_manager_sub_callback, ON_NEW_DATA));
+
   // Wait for some time for everything to initialize
   delay(2000);
 }
+
+
+
+
+
 
 void ros_imu(float *orientation, float *angular_velocity, float *linear_acceleration,float *orientationCovariance,float *linaerAccelerationCovariance,float *angularVelocityCovariance) 
 {
@@ -116,6 +186,7 @@ void ros_imu(float *orientation, float *angular_velocity, float *linear_accelera
 
 
   RCSOFTCHECK(rmw_uros_sync_session(1000));
+
 	int64_t time = rmw_uros_epoch_millis();
 
   imu_msg.header.stamp.sec = time;
