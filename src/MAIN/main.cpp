@@ -5,9 +5,28 @@
 #include <MAIN/imu.h>
 
 #include "filter.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/FreeRTOSConfig.h"
+#include "freertos/semphr.h"
+
+SemaphoreHandle_t dataMutex;
+
+TaskHandle_t taskSubHandle = NULL;
+TaskHandle_t taskPubHandle = NULL;
+
+void vTaskSub(void *pvParameters);
+void vTaskPub(void *pvParameters);
 
 bool _imu_connect; 
 bool _connect = false;
+
+float* imu_orientation;
+float* imu_angularVelocity;
+float* imu_linaerAcceleration;
+float* imu_orientationCovariance;
+float* imu_linaerAccelerationCovariance;
+float* imu_angularVelocityCovariance;
 
 // float imu_orientation[4];           //x, y, z, w
 // float imu_linaerAcceleration[3];   //x, y, z
@@ -36,34 +55,56 @@ void setup(){
   if(_imu_connect != 0) {
     ESP.restart();
   }
+  // Criação das Tasks
+  BaseType_t result = xTaskCreatePinnedToCore(vTaskSub, "vTaskSub", configMINIMAL_STACK_SIZE+8192, NULL, 2, &taskSubHandle, PRO_CPU_NUM);
+  if (result != pdPASS) {
+   //Serial.println("Erro ao criar vTaskSub!");
+  }
+  result = xTaskCreatePinnedToCore(vTaskPub, "vTaskPub", configMINIMAL_STACK_SIZE+8192, NULL, 2, &taskPubHandle, APP_CPU_NUM);
+  if (result != pdPASS) {
+   //Serial.println("Erro ao criar vTaskPub!");
+  }
+
 }
 
 
 void loop(){
 
-  // if(!rosConnected(nh,_connect)) {
-  //   pixels.fill(0x000000);
-  //   pixels.show();
-  // }
+  vTaskDelay(100);
+  // delay(10);
+}   
 
-  // int* ultrasonic_range = ultrasonic_measurments(previousTime); 
-  // ros_ultrasonic(ultrasonic_range);
+void vTaskSub(void *pvParameters)
+{
+  while(1)
+  {
+    if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE) {
+      imu_orientation = orientation(); 
+      imu_angularVelocity = angular_velocity(); 
+      imu_linaerAcceleration = linear_acceleration();
+      imu_orientationCovariance = orientation_covariance();
+      imu_linaerAccelerationCovariance = linear_acceleration_covariance(); 
+      imu_angularVelocityCovariance = angular_velocity_covariance(); 
+      xSemaphoreGive(dataMutex);
+    }
+    rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
+    vTaskDelay(10);
+  }
+}
 
-  float* imu_orientation = orientation(); 
-  float* imu_angularVelocity = angular_velocity(); 
-  float* imu_linaerAcceleration = linear_acceleration();
-  float* imu_orientationCovariance = orientation_covariance();
-  float* imu_linaerAccelerationCovariance = linear_acceleration_covariance(); 
-  float* imu_angularVelocityCovariance = angular_velocity_covariance(); 
-  
-  ros_imu(imu_orientation, 
+void vTaskPub(void *pvParameters)
+{
+  while(1)
+  {
+    if (xSemaphoreTake(dataMutex, portMAX_DELAY) == pdTRUE) {
+      ros_imu(imu_orientation, 
           imu_angularVelocity, 
           imu_linaerAcceleration,
           imu_orientationCovariance,imu_linaerAccelerationCovariance,imu_angularVelocityCovariance); 
-
-  // nh.spinOnce();
-
-  rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
-
-  delay(10);
-}   
+      xSemaphoreGive(dataMutex);
+    }
+    
+    rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
+    vTaskDelay(10);
+  }
+}
