@@ -9,9 +9,9 @@
 bool _imu_connect; 
 bool _connect = false;
 
-// float imu_orientation[4];           //x, y, z, w
-// float imu_linaerAcceleration[3];   //x, y, z
-// float imu_angularVelocity[3];      //x, y, z 
+float imu_orientation[4];           //x, y, z, w
+float imu_linaerAcceleration[3];   //x, y, z
+float imu_angularVelocity[3];      //x, y, z 
 
 int ultrasonic_range[NUMBER_ULTRASONIC_SENSORS];  
 int previousTime; 
@@ -21,21 +21,27 @@ int previousTime;
 void setup(){
 
   led_strip_init();
-  ros_init();
 
   pinMode(LED_BUILD_IN,OUTPUT);
   digitalWrite(LED_BUILD_IN,LOW);
+
+  _imu_connect = imu_setup();
+
+  while (_imu_connect != 0) 
+  {
+    _imu_connect = imu_setup();
+  }
 
   //Serial.begin(9600);
 
   previousTime = millis();
 
   // check that the IMU initializes correctly
-  _imu_connect = imu_setup();
 
-  if(_imu_connect != 0) {
-    ESP.restart();
-  }
+  ros_init();
+
+  // delay(3000);
+  
 }
 
 
@@ -62,9 +68,8 @@ void loop(){
           imu_linaerAcceleration,
           imu_orientationCovariance,imu_linaerAccelerationCovariance,imu_angularVelocityCovariance); 
 
-  // nh.spinOnce();
 
-  rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
+  rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
 
   delay(10);
 }   
