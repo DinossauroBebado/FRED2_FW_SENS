@@ -205,6 +205,6 @@ void angular_velocity()
 void loop()
 {
     quaternion_angle();
-    // linear_acceleration();  
-    //  angular_velocity();
+    linear_acceleration();  
+    angular_velocity();
 }

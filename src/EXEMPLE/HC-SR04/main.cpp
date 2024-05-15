@@ -1,6 +1,7 @@
 #include <MAIN/config.h>
 #include <Arduino.h>
-#include "ultrasonic.h"
+#include <Ultrasonic.h>
+
 
 /*
 ------------------   ------------------   ------------------
@@ -25,25 +26,27 @@
 #define ECHO_3 32
 #define TRIG_3 12
 
-int ultrasonic_range[NUMBER_ULTRASONIC_SENSORS]; 
-int previousTime; 
 
-void setup(){
-    Serial.begin(115200);
-    previousTime = millis();
+Ultrasonic ultrasonic1(TRIG_1, ECHO_1);	// An ultrasonic sensor HC-04
+Ultrasonic ultrasonic2(TRIG_2, ECHO_2);		// An ultrasonic sensor PING)))
+Ultrasonic ultrasonic3(TRIG_1, ECHO_3);		// An Seeed Studio ultrasonic sensor
 
+
+void setup() {
+  Serial.begin(115200);
 }
 
-void loop(){
-    int* ultrasonic_range = ultrasonic_measurments(previousTime); 
+void loop() {
+  Serial.print("Sensor 01: ");
+  Serial.print(ultrasonic1.read()); // Prints the distance on the default unit (centimeters)
+  Serial.println("cm");
 
-    for(int i=0; i<NUMBER_ULTRASONIC_SENSORS;i++){
-        Serial.print("| SENSOR ");
-        Serial.print(i);
-        Serial.print(" :");
-        Serial.print(ultrasonic_range[i]);
-    }
+//   Serial.print("Sensor 02: ");
+//   Serial.print(ultrasonic2.read(CM)); // Prints the distance making the unit explicit
+//   Serial.println("cm");
 
-    Serial.println("");
+//   Serial.print("Sensor 03: ");
+//   Serial.print(ultrasonic3.read(INC)); // Prints the distance in inches
+//   Serial.println("inc");
 
-}
+  delay(1000);}
