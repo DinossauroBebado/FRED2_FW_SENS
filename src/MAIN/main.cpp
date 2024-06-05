@@ -6,6 +6,8 @@
 
 #include "filter.h"
 
+int inductiveSensor = 0;
+int metalDetection = NOT_DETECTED;
 bool _imu_connect; 
 bool _connect = false;
 
@@ -32,13 +34,13 @@ void setup(){
     _imu_connect = imu_setup();
   }
 
-  //Serial.begin(9600);
+  Serial.begin(115200);
 
   previousTime = millis();
 
   // check that the IMU initializes correctly
 
-  ros_init();
+  // ros_init();
 
   // delay(3000);
   
@@ -52,7 +54,15 @@ void loop(){
   //   pixels.show();
   // }
 
-
+  inductiveSensor = analogRead(INDUCTIVE_PIN);
+  if(inductiveSensor < DETECTED_THRS)
+  {       
+    metalDetection = NOT_DETECTED;
+  }
+  else 
+  {
+    metalDetection = DETECTED;
+  }
   int* ultrasonic_range = ultrasonic_measurments(previousTime); 
   ros_ultrasonic(ultrasonic_range);
 
@@ -70,6 +80,5 @@ void loop(){
 
 
   rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
-
   delay(10);
 }   

@@ -31,3 +31,11 @@
 
 // ----------- DEBUG 
 #define  LED_BUILD_IN  2
+
+// ---------- INDUCTIVE SENSOR CONFIG
+#define DETECTED_THRS    3800
+#define NOT_DETECTED    0
+#define DETECTED    1
+#define INDUCTIVE_PIN   39
+
+// --------- COLOR SENSOR CONFIG

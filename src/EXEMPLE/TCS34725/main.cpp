@@ -34,4 +34,5 @@ void loop(void) {
   Serial.print("G: "); Serial.print(green, DEC); Serial.print(" ");
   Serial.print("B: "); Serial.print(blue, DEC); Serial.print(" ");
   Serial.println(" ");
+  delay(250);
 }
