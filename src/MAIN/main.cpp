@@ -30,17 +30,22 @@ int previousTime;
 
 void setup(){
 
+  int counter_tries = 0;
   led_strip_init();
 
   pinMode(LED_BUILD_IN,OUTPUT);
   digitalWrite(LED_BUILD_IN,LOW);
 
-  if (tcs.begin()) {
+  while (!(tcs.begin()) && counter_tries < 5) 
+  {
     Serial.println("Found sensor");
-  } else {
+    counter_tries++;
+    delay(500);
+  } 
+  if(counter_tries >= 5)
     Serial.println("No TCS34725 found ... check your connections");
-    while (1);
-  }
+  else
+    Serial.println("Found sensor");
   // Now we're ready to get readings!
 
   _imu_connect = imu_setup();
