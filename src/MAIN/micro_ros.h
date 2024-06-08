@@ -8,6 +8,8 @@
 #include <sensor_msgs/msg/range.h>
 #include <rmw_microros/rmw_microros.h>
 #include <std_msgs/msg/int16.h>
+#include <std_msgs/msg/bool.h>
+#include <std_msgs/msg/color_rgba.h>
 
 rclc_executor_t executor;
 rcl_allocator_t allocator;
@@ -34,6 +36,12 @@ std_msgs__msg__Int16 range_msg_right;
 rcl_publisher_t ultrasound_publisher_back;
 std_msgs__msg__Int16 range_msg_back;
 
+
+rcl_publisher_t inductive_publisher;
+std_msgs__msg__Bool inductive_msg;
+
+rcl_publisher_t color_sensor_publisher;
+std_msgs__msg__ColorRGBA color_sensor_msg;
 
 int led_color = 0 ;
 
@@ -131,14 +139,25 @@ void ros_init()
     &node,
     ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16),
     "sensor/range/ultrasonic/right"));
-
-
-
+  
   RCCHECK(rclc_publisher_init_default(
   &ultrasound_publisher_back,
   &node,
   ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int16),
   "sensor/range/ultrasonic/back"));
+
+  //create pub for inductive sensor
+  RCCHECK(rclc_publisher_init_default(
+      &inductive_publisher,
+      &node,
+       ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
+      "sensor/inductive/read"));
+  //create pub for COLOR SENSOR
+  RCCHECK(rclc_publisher_init_default(
+      &color_sensor_publisher,
+      &node,
+       ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, ColorRGBA),
+      "sensor/color/read"));
 
   RCCHECK(rclc_executor_add_subscription(&executor, &led_manager_sub, &led_msg, &led_manager_sub_callback, ON_NEW_DATA));
 
@@ -194,4 +213,16 @@ void ros_imu(float *orientation, float *angular_velocity, float *linear_accelera
   // Publish IMU data
   RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
 
+}
+
+void ros_goal_detectors(bool metalDetection, float r, float g, float b)
+{
+  inductive_msg.data = metalDetection;
+  color_sensor_msg.a = 0;
+  color_sensor_msg.r = r;
+  color_sensor_msg.g = g;
+  color_sensor_msg.b = b;
+  // Publish IMU data
+  RCSOFTCHECK(rcl_publish(&inductive_publisher, &inductive_msg, NULL));
+  RCSOFTCHECK(rcl_publish(&color_sensor_publisher, &color_sensor_msg, NULL));
 }

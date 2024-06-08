@@ -3,11 +3,19 @@
 #include "led_strip.h"
 #include <MAIN/micro_ros.h>
 #include <MAIN/imu.h>
+#include <Adafruit_TCS34725.h>
 
 #include "filter.h"
 
+/* Initialise with default values (int time = 2.4ms, gain = 1x) */
+// Adafruit_TCS34725 tcs = Adafruit_TCS34725();
+
+/* Initialise with specific int time and gain values */
+Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_1X);
+
+float r, g, b;
 int inductiveSensor = 0;
-int metalDetection = NOT_DETECTED;
+bool metalDetection = NOT_DETECTED;
 bool _imu_connect; 
 bool _connect = false;
 
@@ -26,6 +34,14 @@ void setup(){
 
   pinMode(LED_BUILD_IN,OUTPUT);
   digitalWrite(LED_BUILD_IN,LOW);
+
+  if (tcs.begin()) {
+    Serial.println("Found sensor");
+  } else {
+    Serial.println("No TCS34725 found ... check your connections");
+    while (1);
+  }
+  // Now we're ready to get readings!
 
   _imu_connect = imu_setup();
 
@@ -53,6 +69,7 @@ void loop(){
   //   pixels.fill(0x000000);
   //   pixels.show();
   // }
+  tcs.getRGB(&r, &g, &b);
 
   inductiveSensor = analogRead(INDUCTIVE_PIN);
   if(inductiveSensor < DETECTED_THRS)
@@ -63,6 +80,7 @@ void loop(){
   {
     metalDetection = DETECTED;
   }
+  ros_goal_detectors(metalDetection, r, g, b);
   int* ultrasonic_range = ultrasonic_measurments(previousTime); 
   ros_ultrasonic(ultrasonic_range);
 
