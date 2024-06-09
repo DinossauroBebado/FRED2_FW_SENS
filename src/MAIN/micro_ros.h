@@ -210,7 +210,7 @@ void ros_imu(float *orientation, float *angular_velocity, float *linear_accelera
 
   imu_msg.header.stamp.sec = time;
 
-  // Publish IMU data
+  // Publish IMU data 
   RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
 
 }

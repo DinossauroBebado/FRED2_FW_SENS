@@ -61,9 +61,9 @@ void setup(){
 
   // check that the IMU initializes correctly
 
-  // ros_init();
+  ros_init();
 
-  // delay(3000);
+  delay(3000);
   
 }
 
