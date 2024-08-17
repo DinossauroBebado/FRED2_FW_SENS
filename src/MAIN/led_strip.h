@@ -5,7 +5,7 @@
 #include "config.h"
 #include <Adafruit_NeoPixel.h>
 
-#define NUMPIXELS 20
+#define NUMPIXELS 23
 
 Adafruit_NeoPixel  pixels(NUMPIXELS, LED_STRIP, NEO_GRB + NEO_KHZ800);
 int long red = 0xFF0000 ;

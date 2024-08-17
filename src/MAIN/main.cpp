@@ -36,7 +36,7 @@ void setup(){
   pinMode(LED_BUILD_IN,OUTPUT);
   digitalWrite(LED_BUILD_IN,LOW);
 
-  while (!(tcs.begin()) && counter_tries < 5) 
+  /* while (!(tcs.begin()) && counter_tries < 5) 
   {
     Serial.println("Found sensor");
     counter_tries++;
@@ -47,7 +47,7 @@ void setup(){
   else
     Serial.println("Found sensor");
   // Now we're ready to get readings!
-
+ */
   _imu_connect = imu_setup();
 
   while (_imu_connect != 0) 
@@ -74,7 +74,7 @@ void loop(){
   //   pixels.fill(0x000000);
   //   pixels.show();
   // }
-  tcs.getRGB(&r, &g, &b);
+  // tcs.getRGB(&r, &g, &b);
 
   inductiveSensor = analogRead(INDUCTIVE_PIN);
   if(inductiveSensor < DETECTED_THRS)
@@ -85,7 +85,7 @@ void loop(){
   {
     metalDetection = DETECTED;
   }
-  ros_goal_detectors(metalDetection, r, g, b);
+  ros_goal_detectors(metalDetection, 0, 0, 0); // modificado de ros_goal_detectors(metalDetection, r, g, b);
   int* ultrasonic_range = ultrasonic_measurments(previousTime); 
   ros_ultrasonic(ultrasonic_range);
 
