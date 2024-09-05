@@ -27,7 +27,7 @@
 #define XSHUNT_1 19
 #define XSHUNT_2 22 
 // -------------LED STIP 
-#define  LED_STRIP  5
+#define  LED_STRIP  14
 
 // ----------- DEBUG 
 #define  LED_BUILD_IN  2
